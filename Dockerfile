@@ -21,6 +21,6 @@ COPY --from=builder /app/package*.json ./
 
 RUN npm install --only=production
 
-EXPOSE 3000
+EXPOSE 6699
 
 CMD ["npm", "run", "start"]

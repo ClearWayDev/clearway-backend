@@ -1,0 +1,61 @@
+name: Build and deploy image
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy-locally:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Ensure deployment is from main branch
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "This workflow only deploys code from the main branch."
+            exit 1
+          fi
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+        with:
+          dockerfile: Dockerfile
+
+      - name: Build Docker image
+        run: |
+          docker build -t clearway .
+
+      - name: Export image
+        run: docker save -o clearway.tar.gz clearway
+
+      - name: install ssh keys
+
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_IP }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Copy Docker image to VPS
+        run: sudo scp  -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  clearway.tar.gz ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/remoteBuilds/
+
+      - name: Login to VPS and run docker
+        run: |
+          ssh ubuntu@${{ secrets.VPS_IP }} "
+            sudo docker load -i /home/ubuntu/remoteBuilds/clearway.tar.gz &&
+            sudo docker stop clearwayContainer || true &&
+            sudo docker rm clearwayContainer || true &&
+            sudo docker run \
+              -e BASE_URL=https://clearway.me/ \
+              -d --name clearwayContainer -p 6699:8080 clearway &&
+               exit"
+
+      - name: cleanup
+        run: rm -rf ~/.ssh
