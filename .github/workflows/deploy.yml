@@ -44,12 +44,12 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
 
       - name: Copy Docker image to VPS
-        run: sudo scp  -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  clearway.tar.gz ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/remoteBuilds/
+        run: sudo scp  -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa  clearway.tar.gz root@${{ secrets.VPS_IP }}:/home/ubuntu/remoteBuilds/
 
       - name: Login to VPS and run docker
         run: |
-          ssh ubuntu@${{ secrets.VPS_IP }} "
-            sudo docker load -i /home/ubuntu/remoteBuilds/clearway.tar.gz &&
+          ssh root@${{ secrets.VPS_IP }} "
+            sudo docker load -i /home/root/remoteBuilds/clearway.tar.gz &&
             sudo docker stop clearwayContainer || true &&
             sudo docker rm clearwayContainer || true &&
             sudo docker run \
