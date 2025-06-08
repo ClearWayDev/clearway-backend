@@ -3,6 +3,8 @@ import http from "http";
 import { Server } from "socket.io";
 import UserTypeDTO from "./app/DTOs/UserTypeDTO";
 import UserDataDTO from "./app/DTOs/UserTypeDTO";
+import admin from "firebase-admin";
+const serviceAccount = require("./fb-admin.json");
 
 // Initialize express app and server
 const appPort = 6699;
@@ -73,3 +75,26 @@ io.on("connection", (socket) => {
 server.listen(appPort, () => {
   console.log(`Server is running on http://localhost:${appPort}`);
 });
+
+// Initialize Firebase Admin SDK
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+// Function to send notification to an FCM token
+const sendNotification = async (fcmToken: string, title: string, body: string) => {
+  const message = {
+    token: fcmToken,
+    notification: {
+      title: title,
+      body: body,
+    },
+  };
+
+  try {
+    const response = await admin.messaging().send(message);
+    console.log("Notification sent successfully:", response);
+  } catch (error) {
+    console.error("Error sending notification:", error);
+  }
+};

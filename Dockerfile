@@ -17,6 +17,7 @@ FROM node:alpine AS runner
 WORKDIR /app
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/fb-admin.json ./dist
 COPY --from=builder /app/package*.json ./
 
 RUN npm install --only=production
