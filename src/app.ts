@@ -57,6 +57,11 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Log any custom events sent by clients
+  socket.onAny((eventName, ...args) => {
+    console.log(`Event received: ${eventName}`, args);
+  });
+
   // Clean up the clients array when a user disconnects
   socket.on("disconnect", () => {
     console.log("A user disconnected");
